@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System Monitor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23151c27'/%3E%3Cpath d='M6 21l5-7 5 4 5-9 5 6' fill='none' stroke='%2334d399' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --ok:#34d399; --warn:#fbbf24; --crit:#f87171;
+  --accent:#4da3ff;
+  --radius:14px;
+  --gap:14px;
+  --pad:16px;
+  --chart-h:150px;
+}
+html[data-resolved="dark"]   { --bg:#0d1117; --panel:#151b24; --panel2:#1b232f; --border:#252e3b; --text:#e6edf3; --muted:#8b98a9; --grid:rgba(255,255,255,.07); --track:#222b39; }
+html[data-resolved="light"]  { --bg:#eef1f6; --panel:#ffffff; --panel2:#f4f6fa; --border:#dce2ec; --text:#18202c; --muted:#657185; --grid:rgba(0,0,0,.08); --track:#e3e8f0; }
+html[data-resolved="amoled"] { --bg:#000000; --panel:#080808; --panel2:#111111; --border:#1c1c1c; --text:#eef2f6; --muted:#8a94a3; --grid:rgba(255,255,255,.08); --track:#1a1a1a; }
+html.compact { --gap:10px; --pad:12px; --chart-h:100px; }
+
+* { box-sizing:border-box; }
+html { font-size:100%; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
+header { display:flex; align-items:center; gap:14px; padding:14px 22px; position:sticky; top:0; z-index:5; background:color-mix(in srgb,var(--bg) 88%,transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); }
+header .logo { width:34px; height:34px; border-radius:9px; background:var(--panel); border:1px solid var(--border); display:grid; place-items:center; flex:none; }
+header h1 { font-size:1.1rem; margin:0; font-weight:700; letter-spacing:.2px; }
+header .sub { font-size:.78rem; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60vw; }
+header .grow { flex:1; min-width:0; }
+.clock { font-variant-numeric:tabular-nums; font-size:1.05rem; font-weight:600; color:var(--muted); }
+.pill { display:inline-flex; align-items:center; gap:6px; font-size:.75rem; color:var(--muted); padding:4px 10px; border:1px solid var(--border); border-radius:99px; background:var(--panel); }
+.pill i { width:8px; height:8px; border-radius:50%; background:var(--crit); display:inline-block; }
+.pill.live i { background:var(--ok); box-shadow:0 0 8px var(--ok); }
+.btn { appearance:none; border:1px solid var(--border); background:var(--panel); color:var(--text); border-radius:10px; height:36px; min-width:36px; padding:0 12px; cursor:pointer; font:inherit; font-size:.85rem; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.btn:hover { border-color:var(--accent); }
+.btn.danger:hover { border-color:var(--crit); color:var(--crit); }
+
+main { padding:22px; }
+#grid { display:grid; gap:var(--gap); grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); }
+#grid.c1 { grid-template-columns:1fr; } #grid.c2 { grid-template-columns:repeat(2,1fr); }
+#grid.c3 { grid-template-columns:repeat(3,1fr); } #grid.c4 { grid-template-columns:repeat(4,1fr); }
+@media (max-width:900px) { #grid.c2,#grid.c3,#grid.c4 { grid-template-columns:1fr; } main { padding:12px; } }
+
+.card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); position:relative; overflow:hidden; transition:border-color .3s, box-shadow .3s; min-width:0; }
+.card.lv1 { border-color:color-mix(in srgb,var(--warn) 65%,var(--border)); }
+.card.lv2 { border-color:var(--crit); box-shadow:0 0 0 1px color-mix(in srgb,var(--crit) 40%,transparent), 0 0 24px color-mix(in srgb,var(--crit) 22%,transparent); }
+.card h2 { margin:0; font-size:.8rem; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); font-weight:700; }
+.card .head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:2px; }
+.big { font-size:2.1rem; font-weight:800; font-variant-numeric:tabular-nums; line-height:1.1; white-space:nowrap; }
+.big small { font-size:.9rem; font-weight:600; color:var(--muted); margin-left:3px; }
+.dual { display:flex; gap:16px; flex-wrap:wrap; justify-content:flex-end; }
+.dual .big { font-size:1.35rem; }
+.dual .tag { font-size:.7rem; font-weight:700; margin-right:5px; }
+.sub { font-size:.8rem; color:var(--muted); margin:2px 0 10px; min-height:1.1em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cw { position:relative; height:var(--chart-h); }
+.cw canvas { width:100%; height:100%; display:block; }
+.cw .cur { position:absolute; top:0; bottom:0; width:1px; background:var(--muted); opacity:0; pointer-events:none; }
+.xl { display:flex; justify-content:space-between; font-size:.68rem; color:var(--muted); margin-top:3px; }
+.na { color:var(--muted); font-size:.85rem; padding:30px 0; text-align:center; }
+
+.cores { display:grid; grid-template-columns:repeat(auto-fill,minmax(14px,1fr)); gap:4px; margin-top:12px; }
+.core { height:38px; background:var(--track); border-radius:5px; position:relative; overflow:hidden; }
+.core b { position:absolute; left:0; right:0; bottom:0; border-radius:5px; transition:height .5s, background .5s; }
+html.compact .core { height:26px; }
+
+.bar { height:12px; background:var(--track); border-radius:99px; overflow:hidden; margin:10px 0; }
+.bar b { display:block; height:100%; border-radius:99px; transition:width .6s, background .6s; }
+.stats { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; }
+.stat { font-size:.72rem; color:var(--muted); }
+.stat b { display:block; color:var(--text); font-size:.95rem; font-variant-numeric:tabular-nums; }
+
+.tabs { display:flex; gap:6px; }
+.tab { font-size:.72rem; padding:3px 10px; border-radius:99px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; font-family:inherit; }
+.tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.proc { display:grid; grid-template-columns:minmax(80px,1.1fr) 2fr auto; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--border); font-size:.85rem; }
+.proc:first-of-type { border-top:0; }
+.proc .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.proc .v { font-variant-numeric:tabular-nums; min-width:62px; text-align:right; font-weight:600; }
+.proc .pb { height:8px; background:var(--track); border-radius:99px; overflow:hidden; }
+.proc .pb b { display:block; height:100%; border-radius:99px; transition:width .5s; }
+
+#tip { position:fixed; z-index:30; pointer-events:none; background:var(--panel2); border:1px solid var(--border); color:var(--text); padding:7px 10px; border-radius:9px; font-size:.75rem; box-shadow:0 8px 24px rgba(0,0,0,.35); opacity:0; transition:opacity .08s; white-space:nowrap; }
+#tip .t { color:var(--muted); margin-bottom:3px; }
+#tip .r { display:flex; gap:8px; align-items:center; }
+#tip .r i { width:8px; height:8px; border-radius:2px; display:inline-block; }
+
+#drawer { position:fixed; top:0; right:0; bottom:0; width:min(400px,100vw); background:var(--panel); border-left:1px solid var(--border); z-index:20; transform:translateX(105%); transition:transform .25s; display:flex; flex-direction:column; box-shadow:-20px 0 50px rgba(0,0,0,.35); }
+#drawer.open { transform:none; }
+#drawer .dh { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); font-weight:700; }
+#drawer .db { overflow:auto; padding:6px 18px 24px; flex:1; }
+#drawer .df { padding:12px 18px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; font-size:.75rem; color:var(--muted); gap:10px; }
+#drawer h3 { font-size:.72rem; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin:20px 0 8px; }
+.f { display:grid; grid-template-columns:120px 1fr; gap:10px; align-items:center; padding:6px 0; font-size:.85rem; }
+.f label { color:var(--muted); }
+.f input[type=text], .f input[type=number], .f select { width:100%; height:34px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:0 10px; font:inherit; font-size:.85rem; }
+.f input:focus, .f select:focus { outline:none; border-color:var(--accent); }
+.f input[type=range] { width:100%; accent-color:var(--accent); }
+.f .pair { display:flex; gap:8px; }
+.sw { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.sw button { width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+.sw button.on { border-color:var(--text); }
+.sw input[type=color] { width:34px; height:26px; border:1px solid var(--border); background:none; border-radius:6px; padding:0; cursor:pointer; }
+.cl { display:flex; align-items:center; gap:8px; padding:6px 8px; border:1px solid var(--border); border-radius:9px; margin:5px 0; font-size:.85rem; background:var(--bg); }
+.cl span { flex:1; }
+.cl button { border:1px solid var(--border); background:var(--panel); color:var(--text); border-radius:6px; width:26px; height:26px; cursor:pointer; }
+.cl button:disabled { opacity:.3; cursor:default; }
+.hint { font-size:.74rem; color:var(--muted); line-height:1.45; margin:4px 0 8px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><svg width="20" height="20" viewBox="0 0 32 32"><path d="M5 21l5-7 5 4 5-9 6 7" fill="none" stroke="var(--ok)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="grow">
+    <h1 id="title">System Monitor</h1>
+    <div class="sub" id="subtitle">connecting…</div>
+  </div>
+  <div class="clock" id="clock"></div>
+  <div class="pill" id="status"><i></i><span>offline</span></div>
+  <button class="btn" id="fsBtn" title="Fullscreen (F)">⛶</button>
+  <button class="btn" id="setBtn" title="Settings">⚙ Settings</button>
+</header>
+<main><div id="grid"></div></main>
+<aside id="drawer" aria-hidden="true">
+  <div class="dh"><span>Settings</span><button class="btn" id="closeBtn">✕</button></div>
+  <div class="db" id="drawerBody"></div>
+  <div class="df"><span>Changes are saved automatically.</span><button class="btn danger" id="resetBtn">Reset all</button></div>
+</aside>
+<div id="tip"></div>
+
+<script>
+'use strict';
+/* ================= state ================= */
+let S = null;               // settings
+let INFO = {};
+let hist = [];              // compact history points
+let last = null;            // last full snapshot
+let es = null;
+let procTab = 'cpu';
+const cards = {};           // id -> {el, update()}
+const $ = (s, r = document) => r.querySelector(s);
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v !== undefined && v !== null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null) el.append(kid.nodeType ? kid : document.createTextNode(kid));
+  return el;
+};
+
+const CARD_TITLES = { cpu:'CPU', mem:'Memory', disk:'Disk', io:'Disk I/O', net:'Network', gpu:'GPU', temp:'Temperature', ping:'Ping', battery:'Battery', uptime:'Uptime', procs:'Top processes' };
+const SWATCHES = ['#4da3ff','#34d399','#a78bfa','#f472b6','#fb923c','#22d3ee','#fbbf24','#f87171'];
+
+/* ================= formatting ================= */
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmtPct = (v) => (v == null ? '–' : `${Math.round(v)}`);
+function fmtBytes(b) {
+  const u = ['B','KB','MB','GB','TB']; let v = Math.max(0, b || 0), i = 0;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return `${v >= 100 || i === 0 ? v.toFixed(0) : v.toFixed(1)} ${u[i]}`;
+}
+function rateParts(bps) {
+  let v = Math.max(0, bps || 0), u, base;
+  if (S.netUnit === 'bits') { v *= 8; u = ['bps','Kbps','Mbps','Gbps']; base = 1000; }
+  else { u = ['B/s','KB/s','MB/s','GB/s']; base = 1024; }
+  let i = 0; while (v >= base && i < u.length - 1) { v /= base; i++; }
+  return [i === 0 ? v.toFixed(0) : v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2), u[i]];
+}
+const fmtRate = (bps) => rateParts(bps).join(' ');
+const tconv = (c) => (c == null ? null : S.tempUnit === 'F' ? c * 9 / 5 + 32 : c);
+const fmtTemp = (c) => (c == null ? '–' : `${Math.round(tconv(c))}°${S.tempUnit}`);
+function fmtDur(sec) {
+  const d = Math.floor(sec / 86400), hh = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60);
+  return d ? `${d}d ${hh}h ${m}m` : hh ? `${hh}h ${m}m` : `${m}m`;
+}
+const level = (v, [w, c], invert = false) => (v == null ? 0 : invert ? (v <= c ? 2 : v <= w ? 1 : 0) : (v >= c ? 2 : v >= w ? 1 : 0));
+const LV_COLOR = ['var(--ok)', 'var(--warn)', 'var(--crit)'];
+const lvPct = (v) => level(v, [S.warn.pct, S.crit.pct]);
+const lvTemp = (v) => level(v, [S.warn.temp, S.crit.temp]);
+const lvPing = (v) => level(v, [S.warn.ping, S.crit.ping]);
+
+/* ================= theme ================= */
+let T = {};
+function hexToHsl(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let hh = 0, s = 0; const l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+    hh = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; hh *= 60;
+  }
+  return [hh, s * 100, l * 100];
+}
+function hslToHex(hh, ss, ll) {
+  ss /= 100; ll /= 100;
+  const k = (n) => (n + hh / 30) % 12, a = ss * Math.min(ll, 1 - ll);
+  const f = (n) => Math.round(255 * (ll - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
+  return '#' + [f(0), f(8), f(4)].map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+function applyTheme() {
+  const root = document.documentElement;
+  const resolved = S.theme === 'auto' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : S.theme;
+  root.dataset.resolved = resolved;
+  root.style.setProperty('--accent', S.accent);
+  root.style.fontSize = `${S.fontScale}%`;
+  root.classList.toggle('compact', S.density === 'compact');
+  const g = $('#grid'); g.className = S.columns === 'auto' ? '' : `c${S.columns}`;
+  document.title = S.title; $('#title').textContent = S.title;
+  const cs = getComputedStyle(root);
+  T = { grid: cs.getPropertyValue('--grid').trim(), muted: cs.getPropertyValue('--muted').trim(),
+        ok: cs.getPropertyValue('--ok').trim(), warn: cs.getPropertyValue('--warn').trim(), crit: cs.getPropertyValue('--crit').trim() };
+  const [hh, ss, ll] = hexToHsl(S.accent);
+  T.accent2 = hslToHex((hh + 50) % 360, ss, ll);
+}
+matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', () => { if (S && S.theme === 'auto') { applyTheme(); draw(); } });
+
+/* ================= charts ================= */
+const niceMax = (v) => { if (v <= 0) return 1; const e = Math.pow(10, Math.floor(Math.log10(v))); const f = v / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; };
+const tip = $('#tip');
+function mkChart() {
+  const cv = h('canvas'); const cur = h('i', { class: 'cur' });
+  const wrap = h('div', { class: 'cw' }, cv, cur);
+  cv.addEventListener('mousemove', (e) => {
+    const o = cv._o, pts = cv._pts; if (!o || !pts || !pts.length) return;
+    const r = cv.getBoundingClientRect(); const x = e.clientX - r.left;
+    const win = S.window * 1000, t = Date.now() - win + (x / r.width) * win;
+    let best = null, bd = Infinity; for (const p of pts) { const d = Math.abs(p.t - t); if (d < bd) { bd = d; best = p; } }
+    if (!best || bd > 12000) { cv.dispatchEvent(new Event('mouseleave')); return; }
+    cur.style.left = `${x}px`; cur.style.opacity = '.5';
+    const time = new Date(best.t).toLocaleTimeString([], { hour12: false });
+    tip.innerHTML = '';
+    tip.append(h('div', { class: 't' }, time));
+    o.series.forEach((s, i) => { const v = best[s.key]; tip.append(h('div', { class: 'r' }, h('i', { style: `background:${cv._colors[i]}` }), `${s.label}: `, h('b', {}, v == null ? '–' : s.fmt(v)))); });
+    tip.style.opacity = '1';
+    const tw = tip.offsetWidth; tip.style.left = `${Math.min(innerWidth - tw - 10, e.clientX + 14)}px`; tip.style.top = `${e.clientY + 14}px`;
+  });
+  cv.addEventListener('mouseleave', () => { tip.style.opacity = '0'; cur.style.opacity = '0'; });
+  return { wrap, cv };
+}
+function drawChart(cv, o) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, hgt = cv.clientHeight;
+  if (!w || !hgt) return;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(hgt * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(hgt * dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, hgt);
+  const now = Date.now(), win = S.window * 1000, t0 = now - win;
+  const pts = hist.filter((p) => p.t >= t0 - 4000);
+  let max = o.max;
+  if (!max) { let m = 0; for (const p of pts) for (const s of o.series) { const v = p[s.key]; if (v != null && v > m) m = v; } max = niceMax(Math.max(m * 1.1, o.minMax || 0)); }
+  const X = (t) => ((t - t0) / win) * w, Y = (v) => hgt - 4 - (Math.min(v, max) / max) * (hgt - 8);
+  g.lineWidth = 1; g.font = '10px system-ui,sans-serif'; g.textBaseline = 'alphabetic';
+  for (let i = 0; i <= 4; i++) {
+    const y = Math.round(4 + (hgt - 8) * i / 4) + .5;
+    g.strokeStyle = T.grid; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke();
+    if (i < 4) { g.fillStyle = T.muted; g.fillText(o.axis(max * (1 - i / 4)), 4, y + 11); }
+  }
+  const colors = o.colors();
+  cv._o = o; cv._pts = pts; cv._colors = colors;
+  o.series.forEach((s, si) => {
+    const col = colors[si];
+    if (S.chartStyle === 'bars') {
+      const bw = Math.max(1.5, (w / (win / (S.refresh * 1000))) * .8);
+      g.fillStyle = col; g.globalAlpha = .85;
+      for (const p of pts) { const v = p[s.key]; if (v == null) continue; const y = Y(v); g.fillRect(X(p.t) - bw / 2, y, bw, hgt - 4 - y); }
+      g.globalAlpha = 1; return;
+    }
+    // split into runs without nulls
+    const runs = []; let run = [];
+    for (const p of pts) { const v = p[s.key]; if (v == null) { if (run.length) runs.push(run); run = []; } else run.push([X(p.t), Y(v)]); }
+    if (run.length) runs.push(run);
+    for (const r of runs) {
+      if (r.length < 2) { g.fillStyle = col; g.beginPath(); g.arc(r[0][0], r[0][1], 2, 0, 7); g.fill(); continue; }
+      if (S.chartStyle === 'area') {
+        const grad = g.createLinearGradient(0, 0, 0, hgt); grad.addColorStop(0, col + '55'); grad.addColorStop(1, col + '05');
+        g.fillStyle = grad; g.beginPath(); g.moveTo(r[0][0], hgt - 4);
+        for (const [x, y] of r) g.lineTo(x, y); g.lineTo(r[r.length - 1][0], hgt - 4); g.closePath(); g.fill();
+      }
+      g.strokeStyle = col; g.lineWidth = 2; g.lineJoin = 'round'; g.beginPath();
+      r.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke();
+    }
+    const lp = pts.length ? pts[pts.length - 1] : null;
+    if (lp && lp[s.key] != null) { g.fillStyle = col; g.beginPath(); g.arc(X(lp.t), Y(lp[s.key]), 3.2, 0, 7); g.fill(); }
+  });
+}
+// resolve colour for a series: auto mode uses level/palette, accent mode uses accent
+function hexOf(cssVar) { return cssVar === 'var(--ok)' ? T.ok : cssVar === 'var(--warn)' ? T.warn : T.crit; }
+const pal = { down: '#34d399', up: '#4da3ff', r: '#22d3ee', w: '#f472b6', ping: '#a78bfa', gpu: '#fb923c', ctemp: '#fb923c', gtemp: '#f472b6', mem: '#22d3ee' };
+function seriesColor(key, lv) {
+  if (S.colorMode === 'accent') return key === 'up' || key === 'w' || key === 'gtemp' ? T.accent2 : S.accent;
+  if (lv != null) return hexOf(LV_COLOR[lv]);
+  return pal[key] || S.accent;
+}
+function levelColor(lv) { return S.colorMode === 'accent' ? S.accent : LV_COLOR[lv]; }
+
+/* ================= cards ================= */
+const lastPt = () => hist[hist.length - 1] || {};
+const win = () => { const t0 = Date.now() - S.window * 1000; return hist.filter((p) => p.t >= t0); };
+const setLv = (el, lv) => { el.classList.toggle('lv1', lv === 1); el.classList.toggle('lv2', lv === 2); };
+
+const builders = {
+  cpu() {
+    const big = h('div', { class: 'big' }), sub = h('div', { class: 'sub' }), ch = mkChart(), cores = h('div', { class: 'cores' });
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'CPU'), big), sub, ch.wrap, h('div', { class: 'xl' }, h('span', {}, '–'), h('span', {}, 'now')), cores);
+    let coreEls = [];
+    return { el, update(s) {
+      const v = s.cpu?.usage; big.innerHTML = v == null ? '–' : `${fmtPct(v)}<small>%</small>`; setLv(el, lvPct(v));
+      sub.textContent = `${INFO.cpuModel || ''} · ${s.cpu?.threads || INFO.threads || '?'} threads`;
+      el.querySelector('.xl span').textContent = `-${S.window >= 120 ? S.window / 60 + ' min' : S.window + ' s'}`;
+      drawChart(ch.cv, { series: [{ key: 'cpu', label: 'CPU', fmt: (x) => x.toFixed(1) + '%' }], max: 100, axis: (x) => Math.round(x) + '%', colors: () => [seriesColor('cpu', lvPct(v))] });
+      const c = s.cores || [];
+      if (coreEls.length !== c.length) { cores.innerHTML = ''; coreEls = c.map((_, i) => { const b = h('b'); cores.append(h('div', { class: 'core' }, b)); return b; }); }
+      c.forEach((x, i) => { coreEls[i].style.height = `${clamp(x, 2, 100)}%`; coreEls[i].style.background = levelColor(lvPct(x)); coreEls[i].parentNode.title = `Core ${i}: ${x.toFixed(0)}%`; });
+    } };
+  },
+  mem() {
+    const big = h('div', { class: 'big' }), sub = h('div', { class: 'sub' }), ch = mkChart();
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Memory'), big), sub, ch.wrap);
+    return { el, update(s) {
+      const m = s.mem; big.innerHTML = m ? `${fmtPct(m.pct)}<small>%</small>` : '–'; setLv(el, lvPct(m?.pct));
+      sub.textContent = m ? `${fmtBytes(m.used)} used of ${fmtBytes(m.total)} · ${fmtBytes(m.total - m.used)} free` : 'No data';
+      drawChart(ch.cv, { series: [{ key: 'mem', label: 'RAM', fmt: (x) => x.toFixed(1) + '%' }], max: 100, axis: (x) => Math.round(x) + '%', colors: () => [seriesColor('mem', lvPct(m?.pct))] });
+    } };
+  },
+  disk() {
+    const big = h('div', { class: 'big' }), sub = h('div', { class: 'sub' }), fill = h('b'), st = h('div', { class: 'stats' });
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Disk'), big), sub, h('div', { class: 'bar' }, fill), st);
+    const ttl = $('h2', el);
+    return { el, update(s) {
+      const d = s.disk; ttl.textContent = d ? `Disk ${d.path}` : 'Disk';
+      if (!d) { big.textContent = '–'; sub.textContent = 'Path not found. Set the drive in Settings.'; fill.style.width = '0'; st.innerHTML = ''; setLv(el, 0); return; }
+      big.innerHTML = `${fmtPct(d.pct)}<small>%</small>`; sub.textContent = `${fmtBytes(d.used)} used of ${fmtBytes(d.total)}`;
+      fill.style.width = `${clamp(d.pct, 0, 100)}%`; fill.style.background = levelColor(level(d.pct, [Math.max(S.warn.pct, 80), Math.max(S.crit.pct, 95)])); setLv(el, level(d.pct, [Math.max(S.warn.pct, 80), Math.max(S.crit.pct, 95)]));
+      st.innerHTML = ''; [['Used', fmtBytes(d.used)], ['Free', fmtBytes(d.total - d.used)], ['Total', fmtBytes(d.total)]].forEach(([k, v]) => st.append(h('div', { class: 'stat' }, k, h('b', {}, v))));
+    } };
+  },
+  io() {
+    const dual = h('div', { class: 'dual' }), ch = mkChart();
+    const rEl = h('div', { class: 'big' }), wEl = h('div', { class: 'big' });
+    dual.append(h('div', {}, h('span', { class: 'tag', style: 'color:#22d3ee' }, 'R'), rEl), h('div', {}, h('span', { class: 'tag', style: 'color:#f472b6' }, 'W'), wEl));
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Disk I/O'), dual), h('div', { class: 'sub' }, 'Read / write, all drives'), ch.wrap);
+    return { el, update(s) {
+      const io = s.io; rEl.textContent = io ? fmtRate(io.read) : '–'; wEl.textContent = io ? fmtRate(io.write) : '–';
+      drawChart(ch.cv, { series: [{ key: 'r', label: 'Read', fmt: fmtRate }, { key: 'w', label: 'Write', fmt: fmtRate }], axis: (x) => fmtRate(x), minMax: 1048576, colors: () => [seriesColor('r'), seriesColor('w')] });
+    } };
+  },
+  net() {
+    const dEl = h('div', { class: 'big' }), uEl = h('div', { class: 'big' }), ch = mkChart(), sub = h('div', { class: 'sub' });
+    const dual = h('div', { class: 'dual' }, h('div', {}, h('span', { class: 'tag', style: 'color:#34d399' }, '▼'), dEl), h('div', {}, h('span', { class: 'tag', style: 'color:#4da3ff' }, '▲'), uEl));
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Network'), dual), sub, ch.wrap);
+    return { el, update(s) {
+      const n = s.net; dEl.textContent = n ? fmtRate(n.down) : '–'; uEl.textContent = n ? fmtRate(n.up) : '–';
+      const w = win(); const pk = (k) => w.reduce((a, p) => Math.max(a, p[k] || 0), 0);
+      sub.textContent = `${n?.iface || 'adapter'} · peak ▼ ${fmtRate(pk('down'))} ▲ ${fmtRate(pk('up'))}`;
+      drawChart(ch.cv, { series: [{ key: 'down', label: 'Download', fmt: fmtRate }, { key: 'up', label: 'Upload', fmt: fmtRate }], axis: (x) => fmtRate(x), minMax: 102400, colors: () => [seriesColor('down'), seriesColor('up')] });
+    } };
+  },
+  gpu() {
+    const big = h('div', { class: 'big' }), sub = h('div', { class: 'sub' }), ch = mkChart();
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'GPU'), big), sub, ch.wrap);
+    return { el, update(s) {
+      const g = s.gpu; const v = g?.util; big.innerHTML = v == null ? '<small>N/A</small>' : `${fmtPct(v)}<small>%</small>`; setLv(el, lvPct(v));
+      const bits = [g?.name]; if (g?.memUsed != null && g?.memTotal) bits.push(`VRAM ${(g.memUsed / 1024).toFixed(1)} / ${(g.memTotal / 1024).toFixed(0)} GB`);
+      if (g?.temp != null) bits.push(fmtTemp(g.temp)); sub.textContent = g ? bits.filter(Boolean).join(' · ') + (v == null ? ' · no usage data' : '') : 'No GPU info';
+      drawChart(ch.cv, { series: [{ key: 'gpu', label: 'GPU', fmt: (x) => x.toFixed(0) + '%' }], max: 100, axis: (x) => Math.round(x) + '%', colors: () => [seriesColor('gpu', S.colorMode === 'accent' ? null : lvPct(v))] });
+    } };
+  },
+  temp() {
+    const cEl = h('div', { class: 'big' }), gEl = h('div', { class: 'big' }), ch = mkChart(), sub = h('div', { class: 'sub' });
+    const dual = h('div', { class: 'dual' }, h('div', {}, h('span', { class: 'tag', style: 'color:#fb923c' }, 'CPU'), cEl), h('div', {}, h('span', { class: 'tag', style: 'color:#f472b6' }, 'GPU'), gEl));
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Temperature'), dual), sub, ch.wrap);
+    const conv = (x) => x == null ? null : tconv(x);
+    return { el, update(s) {
+      const c = s.temp?.cpu, g = s.temp?.gpu; cEl.textContent = fmtTemp(c); gEl.textContent = fmtTemp(g);
+      setLv(el, Math.max(lvTemp(c), lvTemp(g)));
+      sub.textContent = c == null && g == null ? 'No sensor access. Run LibreHardwareMonitor with Remote Web Server (see README).' : 'Package / core temperature';
+      hist.forEach((p) => { p.ct = conv(p.ctemp); p.gt = conv(p.gtemp); });
+      drawChart(ch.cv, { series: [{ key: 'ct', label: 'CPU', fmt: (x) => x.toFixed(0) + '°' + S.tempUnit }, { key: 'gt', label: 'GPU', fmt: (x) => x.toFixed(0) + '°' + S.tempUnit }], axis: (x) => Math.round(x) + '°', minMax: S.tempUnit === 'F' ? 140 : 60, colors: () => [seriesColor('ctemp', S.colorMode === 'accent' ? null : lvTemp(c)), seriesColor('gtemp')] });
+    } };
+  },
+  ping() {
+    const big = h('div', { class: 'big' }), sub = h('div', { class: 'sub' }), ch = mkChart(), st = h('div', { class: 'stats' });
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Ping'), big), sub, ch.wrap, st);
+    return { el, update(s) {
+      const p = s.ping; const v = p?.ms; big.innerHTML = v == null ? '<small>timeout</small>' : `${v < 10 ? v.toFixed(1) : Math.round(v)}<small>ms</small>`; setLv(el, v == null ? (p ? 2 : 0) : lvPing(v));
+      sub.textContent = p ? `to ${p.host}` : 'Set a host in Settings';
+      const w = win().filter((x) => x.ping !== undefined); const ok = w.map((x) => x.ping).filter((x) => x != null);
+      const loss = w.length ? Math.round(100 * (w.length - ok.length) / w.length) : 0;
+      st.innerHTML = ''; [['Min', ok.length ? Math.min(...ok).toFixed(0) + ' ms' : '–'], ['Avg', ok.length ? (ok.reduce((a, b) => a + b, 0) / ok.length).toFixed(0) + ' ms' : '–'], ['Max', ok.length ? Math.max(...ok).toFixed(0) + ' ms' : '–'], ['Loss', loss + '%']].forEach(([k, x]) => st.append(h('div', { class: 'stat' }, k, h('b', {}, x))));
+      drawChart(ch.cv, { series: [{ key: 'ping', label: 'Ping', fmt: (x) => x.toFixed(1) + ' ms' }], axis: (x) => Math.round(x) + 'ms', minMax: 50, colors: () => [seriesColor('ping', S.colorMode === 'accent' ? null : lvPing(v))] });
+    } };
+  },
+  battery() {
+    const big = h('div', { class: 'big' }), sub = h('div', { class: 'sub' }), fill = h('b');
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Battery'), big), sub, h('div', { class: 'bar' }, fill));
+    return { el, update(s) {
+      const b = s.battery;
+      if (!b || !b.has) { big.innerHTML = '<small>No battery</small>'; sub.textContent = 'This PC has no battery.'; fill.style.width = '0'; setLv(el, 0); return; }
+      big.innerHTML = `${fmtPct(b.percent)}<small>%</small>`;
+      sub.textContent = b.charging ? 'Charging' : b.ac ? 'Plugged in' : b.remaining ? `${Math.floor(b.remaining / 60)}h ${b.remaining % 60}m remaining` : 'On battery';
+      const lv = level(b.percent, [30, 15], true); fill.style.width = `${clamp(b.percent, 0, 100)}%`; fill.style.background = b.charging ? '#22d3ee' : levelColor(lv); setLv(el, b.charging ? 0 : lv);
+    } };
+  },
+  uptime() {
+    const big = h('div', { class: 'big' }), sub = h('div', { class: 'sub' });
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Uptime')), big, sub);
+    big.style.margin = '10px 0 4px';
+    return { el, update(s) { big.textContent = fmtDur(s.uptime || 0); sub.textContent = `Since ${new Date(Date.now() - (s.uptime || 0) * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`; } };
+  },
+  procs() {
+    const list = h('div'), tabs = h('div', { class: 'tabs' });
+    const mk = (id, label) => h('button', { class: 'tab', onclick: () => { procTab = id; if (last) cards.procs.update(last); } }, label);
+    const tc = mk('cpu', 'CPU'), tm = mk('mem', 'RAM'); tabs.append(tc, tm);
+    const el = h('section', { class: 'card' }, h('div', { class: 'head' }, h('h2', {}, 'Top processes'), tabs), h('div', { class: 'sub' }, 'Processes with the same name are added together'), list);
+    return { el, update(s) {
+      tc.classList.toggle('on', procTab === 'cpu'); tm.classList.toggle('on', procTab === 'mem');
+      const rows = s.procs ? s.procs[procTab] : null; list.innerHTML = '';
+      if (!rows || !rows.length) { list.append(h('div', { class: 'na' }, 'No data')); return; }
+      const peak = Math.max(procTab === 'cpu' ? 1 : 1, ...rows.map((r) => r[procTab]));
+      rows.slice(0, 6).forEach((r) => {
+        const v = r[procTab]; const txt = procTab === 'cpu' ? `${v >= 10 ? Math.round(v) : v.toFixed(1)}%` : fmtBytes(v);
+        const col = S.colorMode === 'accent' ? S.accent : procTab === 'cpu' ? '#fb923c' : '#a78bfa';
+        list.append(h('div', { class: 'proc' }, h('span', { class: 'nm', title: r.name }, r.name), h('div', { class: 'pb' }, h('b', { style: `width:${clamp(v / peak * 100, 2, 100)}%;background:${col}` })), h('span', { class: 'v' }, txt)));
+      });
+    } };
+  },
+};
+
+/* ================= rendering ================= */
+function buildGrid() {
+  const g = $('#grid'); g.innerHTML = ''; for (const k of Object.keys(cards)) delete cards[k];
+  for (const c of S.cards) {
+    if (!c.show) continue;
+    const card = builders[c.id](); cards[c.id] = card; g.append(card.el);
+  }
+}
+function draw() { if (!last) return; for (const c of Object.values(cards)) { try { c.update(last); } catch (e) { console.error(e); } } }
+function compact(s) {
+  return { t: s.t, cpu: s.cpu?.usage ?? null, mem: s.mem?.pct ?? null, down: s.net?.down ?? null, up: s.net?.up ?? null, gpu: s.gpu?.util ?? null,
+           ctemp: s.temp?.cpu ?? null, gtemp: s.temp?.gpu ?? null, ping: s.ping ? s.ping.ms : null, r: s.io?.read ?? null, w: s.io?.write ?? null, disk: s.disk?.pct ?? null };
+}
+
+/* ================= connection ================= */
+function setStatus(on, text) { const p = $('#status'); p.classList.toggle('live', on); $('span', p).textContent = text; }
+function connect() {
+  if (es) es.close();
+  es = new EventSource('/api/stream');
+  es.addEventListener('open', () => setStatus(true, 'live'));
+  es.addEventListener('error', () => setStatus(false, 'reconnecting…'));
+  es.addEventListener('hello', (e) => {
+    const d = JSON.parse(e.data); INFO = d.info; hist = d.history || [];
+    const first = !S; S = d.settings; applyTheme(); if (first) buildDrawer(); buildGrid();
+    $('#subtitle').textContent = `${INFO.host} · ${INFO.platform} · ${INFO.cpuModel}`;
+    setStatus(true, 'live');
+  });
+  es.addEventListener('tick', (e) => {
+    last = JSON.parse(e.data); hist.push(compact(last));
+    const cutoff = Date.now() - 10 * 60 * 1000; while (hist.length && hist[0].t < cutoff) hist.shift();
+    draw();
+  });
+  es.addEventListener('settings', (e) => {
+    const next = JSON.parse(e.data);
+    if (JSON.stringify(next) === JSON.stringify(S)) return;
+    applyFromServer(next);
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { es?.close(); es = null; setStatus(false, 'paused'); } else connect();
+});
+
+/* ================= settings drawer ================= */
+let saveTimer = null;
+function commit(rebuild = false) {
+  applyTheme(); if (rebuild) buildGrid(); draw();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(S) }).catch(() => {}), 350);
+}
+function applyFromServer(next) {
+  S = next; applyTheme(); buildGrid(); draw();
+  if (!$('#drawer').contains(document.activeElement)) buildDrawer();
+}
+const sel = (path, opts, rebuild) => { const s = h('select', { onchange: (e) => { setPath(path, e.target.value); commit(rebuild); } }, opts.map(([v, l]) => h('option', { value: v }, l))); s.value = String(getPath(path)); return s; };
+const txt = (path, ph = '') => h('input', { type: 'text', placeholder: ph, value: getPath(path) ?? '', oninput: (e) => { setPath(path, e.target.value); commit(); } });
+const numIn = (path, min, max) => h('input', { type: 'number', min, max, value: getPath(path), oninput: (e) => { const n = parseFloat(e.target.value); if (Number.isFinite(n)) { setPath(path, n); commit(); } } });
+function getPath(p) { return p.split('.').reduce((o, k) => o?.[k], S); }
+function setPath(p, v) { const ks = p.split('.'); const k = ks.pop(); const o = ks.reduce((x, y) => x[y], S); o[k] = typeof o[k] === 'number' ? Number(v) : v; }
+const row = (label, ctl) => h('div', { class: 'f' }, h('label', {}, label), ctl);
+
+function buildDrawer() {
+  const b = $('#drawerBody'); b.innerHTML = '';
+  const sw = h('div', { class: 'sw' });
+  const colorIn = h('input', { type: 'color', value: S.accent, oninput: (e) => { S.accent = e.target.value; refreshSw(); commit(); } });
+  const refreshSw = () => { [...sw.querySelectorAll('button')].forEach((x) => x.classList.toggle('on', x.dataset.c.toLowerCase() === S.accent.toLowerCase())); colorIn.value = S.accent; };
+  SWATCHES.forEach((c) => sw.append(h('button', { 'data-c': c, style: `background:${c}`, title: c, onclick: () => { S.accent = c; refreshSw(); commit(); } })));
+  sw.append(colorIn); refreshSw();
+
+  b.append(h('h3', {}, 'Appearance'),
+    row('Title', txt('title', 'System Monitor')),
+    row('Theme', sel('theme', [['dark', 'Dark'], ['light', 'Light'], ['amoled', 'AMOLED black'], ['auto', 'Follow system']])),
+    row('Accent', sw),
+    row('Chart colors', sel('colorMode', [['auto', 'Auto (by level)'], ['accent', 'Single accent color']])),
+    row('Chart style', sel('chartStyle', [['area', 'Area'], ['line', 'Line'], ['bars', 'Bars']])),
+    row('Density', sel('density', [['comfortable', 'Comfortable'], ['compact', 'Compact']])),
+    row('Columns', sel('columns', [['auto', 'Auto'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']])),
+    row('Text size', h('input', { type: 'range', min: 80, max: 160, step: 10, value: S.fontScale, oninput: (e) => { S.fontScale = +e.target.value; commit(); } })),
+
+    h('h3', {}, 'Data'),
+    row('Refresh', sel('refresh', [[1, 'Every 1 s'], [2, 'Every 2 s'], [3, 'Every 3 s'], [5, 'Every 5 s']])),
+    row('Chart window', sel('window', [[60, '1 minute'], [120, '2 minutes'], [300, '5 minutes'], [600, '10 minutes']])),
+    row('Network units', sel('netUnit', [['bytes', 'Bytes (MB/s)'], ['bits', 'Bits (Mbps)']])),
+    row('Temperature', sel('tempUnit', [['C', 'Celsius (°C)'], ['F', 'Fahrenheit (°F)']])),
+    row('Drive / path', txt('disk', 'C:  or  /  (blank = system)')),
+    row('Ping host', txt('host', '1.1.1.1')),
+    row('Net interface', txt('iface', 'auto')),
+    row('LibreHW URL', txt('lhm', 'http://127.0.0.1:8085/data.json')),
+    h('div', { class: 'hint' }, 'Charts keep up to 10 minutes of history while this page is open. Data is only collected while the tab is visible.'),
+
+    h('h3', {}, 'Warning / critical levels'),
+    row('Usage %', h('div', { class: 'pair' }, numIn('warn.pct', 1, 200), numIn('crit.pct', 1, 200))),
+    row('Temp °C', h('div', { class: 'pair' }, numIn('warn.temp', 1, 200), numIn('crit.temp', 1, 200))),
+    row('Ping ms', h('div', { class: 'pair' }, numIn('warn.ping', 1, 5000), numIn('crit.ping', 1, 5000))),
+    h('div', { class: 'hint' }, 'First box = warning (amber), second = critical (red). Cards get a colored border when a level is reached.'),
+
+    h('h3', {}, 'Cards'),
+    h('div', { id: 'cardList' }));
+  buildCardList();
+}
+function buildCardList() {
+  const box = $('#cardList'); box.innerHTML = '';
+  S.cards.forEach((c, i) => {
+    const mv = (d) => { const j = i + d; if (j < 0 || j >= S.cards.length) return; [S.cards[i], S.cards[j]] = [S.cards[j], S.cards[i]]; buildCardList(); commit(true); };
+    box.append(h('div', { class: 'cl' },
+      h('input', { type: 'checkbox', ...(c.show ? { checked: '' } : {}), onchange: (e) => { c.show = e.target.checked; commit(true); } }),
+      h('span', {}, CARD_TITLES[c.id]),
+      h('button', { title: 'Move up', ...(i === 0 ? { disabled: '' } : {}), onclick: () => mv(-1) }, '↑'),
+      h('button', { title: 'Move down', ...(i === S.cards.length - 1 ? { disabled: '' } : {}), onclick: () => mv(1) }, '↓')));
+  });
+}
+const drawer = $('#drawer');
+const toggleDrawer = (open) => { drawer.classList.toggle('open', open); drawer.setAttribute('aria-hidden', String(!open)); };
+$('#setBtn').onclick = () => toggleDrawer(!drawer.classList.contains('open'));
+$('#closeBtn').onclick = () => toggleDrawer(false);
+$('#resetBtn').onclick = async () => {
+  if (!confirm('Reset all dashboard settings to default?')) return;
+  const r = await fetch('/api/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  S = await r.json(); applyTheme(); buildGrid(); buildDrawer(); draw();
+};
+$('#fsBtn').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
+addEventListener('keydown', (e) => {
+  if (e.target.matches('input,select,textarea')) return;
+  if (e.key === 'Escape') toggleDrawer(false);
+  if (e.key === 'f' || e.key === 'F') $('#fsBtn').click();
+  if (e.key === 's' || e.key === 'S') $('#setBtn').click();
+});
+addEventListener('resize', () => draw());
+setInterval(() => { $('#clock').textContent = new Date().toLocaleTimeString([], { hour12: false }); }, 1000);
+$('#clock').textContent = new Date().toLocaleTimeString([], { hour12: false });
+connect();
+</script>
+</body>
+</html>

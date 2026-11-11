@@ -1,0 +1,62 @@
+{
+  "Name": "系统监控",
+  "Description": "在按键上实时显示电脑状态：CPU、内存、磁盘、网络、GPU 和温度。",
+  "Actions": [
+    {
+      "Name": "打开仪表盘",
+      "Tooltip": "在浏览器中打开完整仪表盘"
+    },
+    {
+      "Name": "CPU 使用率",
+      "Tooltip": "实时 CPU 使用率"
+    },
+    {
+      "Name": "内存使用率",
+      "Tooltip": "实时内存使用率"
+    },
+    {
+      "Name": "磁盘使用率",
+      "Tooltip": "磁盘已用空间"
+    },
+    {
+      "Name": "网络速度",
+      "Tooltip": "下载 / 上传速度"
+    },
+    {
+      "Name": "GPU 使用率",
+      "Tooltip": "实时 GPU 使用率"
+    },
+    {
+      "Name": "温度",
+      "Tooltip": "CPU 或 GPU 温度"
+    },
+    {
+      "Name": "系统概览",
+      "Tooltip": "CPU、内存、磁盘一键总览"
+    },
+    {
+      "Name": "延迟 Ping",
+      "Tooltip": "到主机的网络延迟"
+    },
+    {
+      "Name": "开机时间",
+      "Tooltip": "电脑已开机时长"
+    },
+    {
+      "Name": "电池",
+      "Tooltip": "笔记本电池电量"
+    },
+    {
+      "Name": "磁盘读写",
+      "Tooltip": "磁盘读取 / 写入速度"
+    },
+    {
+      "Name": "进程排行",
+      "Tooltip": "按 CPU 或内存排名前三的进程"
+    },
+    {
+      "Name": "CPU 核心",
+      "Tooltip": "每个 CPU 核心的使用率"
+    }
+  ]
+}

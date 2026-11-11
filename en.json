@@ -1,0 +1,62 @@
+{
+  "Name": "System Monitor",
+  "Description": "Live computer status on your keys, plus a full web dashboard with charts and settings.",
+  "Actions": [
+    {
+      "Name": "Open Dashboard",
+      "Tooltip": "Open the full dashboard in your browser"
+    },
+    {
+      "Name": "CPU Usage",
+      "Tooltip": "Live CPU usage"
+    },
+    {
+      "Name": "Memory Usage",
+      "Tooltip": "Live RAM usage"
+    },
+    {
+      "Name": "Disk Usage",
+      "Tooltip": "Used space on a drive"
+    },
+    {
+      "Name": "Network Speed",
+      "Tooltip": "Download / upload speed"
+    },
+    {
+      "Name": "GPU Usage",
+      "Tooltip": "Live GPU usage (NVIDIA works best)"
+    },
+    {
+      "Name": "Temperature",
+      "Tooltip": "CPU or GPU temperature"
+    },
+    {
+      "Name": "System Overview",
+      "Tooltip": "CPU, RAM and Disk bars on one key"
+    },
+    {
+      "Name": "Ping",
+      "Tooltip": "Network latency to a host"
+    },
+    {
+      "Name": "Uptime",
+      "Tooltip": "How long the PC has been on"
+    },
+    {
+      "Name": "Battery",
+      "Tooltip": "Laptop battery level"
+    },
+    {
+      "Name": "Disk I/O",
+      "Tooltip": "Disk read / write speed"
+    },
+    {
+      "Name": "Top Process",
+      "Tooltip": "Top 3 processes by CPU or RAM"
+    },
+    {
+      "Name": "CPU Cores",
+      "Tooltip": "Usage of every CPU core"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# dependencies are installed with `npm install` (or shipped inside the Release zip)
+node_modules/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/

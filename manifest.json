@@ -1,0 +1,294 @@
+{
+  "Version": "1.0.0",
+  "Author": "Custom",
+  "Name": "System Monitor",
+  "Description": "Live computer status on your keys, plus a full web dashboard with charts and settings.",
+  "Icon": "assets/icons/icon.png",
+  "Category": "System Monitor",
+  "CategoryIcon": "assets/icons/category.png",
+  "CodePath": "plugin/app.js",
+  "Type": "JavaScript",
+  "SupportedInMultiActions": false,
+  "UUID": "com.ulanzi.ulanzistudio.systemmonitor",
+  "Actions": [
+    {
+      "Name": "Open Dashboard",
+      "Icon": "assets/icons/dashboard.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Open Dashboard",
+          "Image": "assets/icons/dashboard.png"
+        }
+      ],
+      "Tooltip": "Open the full dashboard in your browser",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.dashboard",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "CPU Usage",
+      "Icon": "assets/icons/cpu.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "CPU Usage",
+          "Image": "assets/icons/cpu.png"
+        }
+      ],
+      "Tooltip": "Live CPU usage",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.cpu",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Memory Usage",
+      "Icon": "assets/icons/mem.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Memory Usage",
+          "Image": "assets/icons/mem.png"
+        }
+      ],
+      "Tooltip": "Live RAM usage",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.mem",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Disk Usage",
+      "Icon": "assets/icons/disk.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Disk Usage",
+          "Image": "assets/icons/disk.png"
+        }
+      ],
+      "Tooltip": "Used space on a drive",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.disk",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Network Speed",
+      "Icon": "assets/icons/net.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Network Speed",
+          "Image": "assets/icons/net.png"
+        }
+      ],
+      "Tooltip": "Download / upload speed",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.net",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "GPU Usage",
+      "Icon": "assets/icons/gpu.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "GPU Usage",
+          "Image": "assets/icons/gpu.png"
+        }
+      ],
+      "Tooltip": "Live GPU usage (NVIDIA works best)",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.gpu",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Temperature",
+      "Icon": "assets/icons/temp.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Temperature",
+          "Image": "assets/icons/temp.png"
+        }
+      ],
+      "Tooltip": "CPU or GPU temperature",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.temp",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "System Overview",
+      "Icon": "assets/icons/overview.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "System Overview",
+          "Image": "assets/icons/overview.png"
+        }
+      ],
+      "Tooltip": "CPU, RAM and Disk bars on one key",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.overview",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Ping",
+      "Icon": "assets/icons/ping.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Ping",
+          "Image": "assets/icons/ping.png"
+        }
+      ],
+      "Tooltip": "Network latency to a host",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.ping",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Uptime",
+      "Icon": "assets/icons/uptime.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Uptime",
+          "Image": "assets/icons/uptime.png"
+        }
+      ],
+      "Tooltip": "How long the PC has been on",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.uptime",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Battery",
+      "Icon": "assets/icons/battery.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Battery",
+          "Image": "assets/icons/battery.png"
+        }
+      ],
+      "Tooltip": "Laptop battery level",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.battery",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Disk I/O",
+      "Icon": "assets/icons/diskio.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Disk I/O",
+          "Image": "assets/icons/diskio.png"
+        }
+      ],
+      "Tooltip": "Disk read / write speed",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.diskio",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "Top Process",
+      "Icon": "assets/icons/top.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "Top Process",
+          "Image": "assets/icons/top.png"
+        }
+      ],
+      "Tooltip": "Top 3 processes by CPU or RAM",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.top",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    },
+    {
+      "Name": "CPU Cores",
+      "Icon": "assets/icons/cores.png",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "state": 0,
+      "States": [
+        {
+          "Name": "CPU Cores",
+          "Image": "assets/icons/cores.png"
+        }
+      ],
+      "Tooltip": "Usage of every CPU core",
+      "UUID": "com.ulanzi.ulanzistudio.systemmonitor.cores",
+      "SupportedInMultiActions": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "Devices": []
+    }
+  ],
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    },
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.11"
+    }
+  ],
+  "Software": {
+    "MinVersion": "2.1.4"
+  }
+}

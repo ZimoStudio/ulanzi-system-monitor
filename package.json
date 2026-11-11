@@ -1,0 +1,13 @@
+{
+  "name": "com.ulanzi.systemmonitor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "System Monitor plugin for Ulanzi Deck (D200)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "pureimage": "^0.4.18",
+    "systeminformation": "^5.23.0",
+    "ws": "^8.18.0"
+  }
+}

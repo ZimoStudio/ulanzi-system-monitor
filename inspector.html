@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover" />
+  <title>System Monitor</title>
+  <link rel="stylesheet" href="../libs/css/uspi.css">
+  <style>
+    .uspi-item-label { width: 112px; }
+    .hint { font-size: 11px; opacity: .6; padding: 2px 0 8px 0; line-height: 1.4; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+
+<body>
+  <div class="uspi-wrapper hidden" id="wrapper">
+    <form id="property-inspector">
+
+      <div class="uspi-heading">Display</div>
+
+      <div type="select" class="uspi-item" data-for="cpu mem disk gpu temp ping battery">
+        <div class="uspi-item-label">Style</div>
+        <select class="uspi-item-value" name="style">
+          <option value="ring" selected>Ring gauge</option>
+          <option value="graph">History graph</option>
+        </select>
+      </div>
+
+      <div type="select" class="uspi-item" data-for="cpu mem disk net gpu temp overview ping uptime battery diskio top cores dashboard">
+        <div class="uspi-item-label">Color</div>
+        <select class="uspi-item-value" name="color">
+          <option value="auto" selected>Auto (by level)</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+          <option value="cyan">Cyan</option>
+          <option value="purple">Purple</option>
+          <option value="pink">Pink</option>
+          <option value="orange">Orange</option>
+          <option value="amber">Amber</option>
+          <option value="red">Red</option>
+        </select>
+      </div>
+
+      <div class="uspi-item" data-for="cpu mem disk net gpu temp ping uptime battery diskio top cores dashboard">
+        <div class="uspi-item-label">Custom label</div>
+        <input class="uspi-item-value" type="text" name="label" maxlength="10" placeholder="(default)">
+      </div>
+
+      <div type="select" class="uspi-item" data-for="cpu mem disk net gpu temp overview ping uptime battery diskio top cores dashboard">
+        <div class="uspi-item-label">Refresh</div>
+        <select class="uspi-item-value" name="interval">
+          <option value="" selected>Auto</option>
+          <option value="1">Every 1 s</option>
+          <option value="2">Every 2 s</option>
+          <option value="3">Every 3 s</option>
+          <option value="5">Every 5 s</option>
+          <option value="10">Every 10 s</option>
+          <option value="30">Every 30 s</option>
+        </select>
+      </div>
+
+      <div class="uspi-heading" data-for="cpu mem disk gpu temp overview ping battery cores dashboard">Colors &amp; alerts</div>
+
+      <div class="uspi-item" data-for="cpu mem disk gpu temp overview ping battery cores dashboard">
+        <div class="uspi-item-label">Warning at</div>
+        <input class="uspi-item-value" type="number" name="warn" min="1" max="200" id="warn">
+      </div>
+      <div class="uspi-item" data-for="cpu mem disk gpu temp overview ping battery cores dashboard">
+        <div class="uspi-item-label">Critical at</div>
+        <input class="uspi-item-value" type="number" name="crit" min="1" max="200" id="crit">
+      </div>
+      <div class="hint" data-for="cpu mem disk gpu temp overview ping battery cores dashboard">
+        With Color = Auto the key turns amber at the warning level and red at the critical level. Leave blank for defaults.
+      </div>
+
+      <div class="uspi-heading" data-for="disk overview">Disk</div>
+      <div class="uspi-item" data-for="disk overview">
+        <div class="uspi-item-label">Drive / path</div>
+        <input class="uspi-item-value" type="text" name="path" placeholder="C:  or  /  or  /Volumes/Data">
+      </div>
+      <div class="hint" data-for="disk overview">Leave blank for the system drive (C: on Windows, / on macOS).</div>
+
+      <div class="uspi-heading" data-for="net">Network</div>
+      <div type="select" class="uspi-item" data-for="net">
+        <div class="uspi-item-label">Units</div>
+        <select class="uspi-item-value" name="unit">
+          <option value="bytes" selected>Bytes (KB/s, MB/s)</option>
+          <option value="bits">Bits (Kbps, Mbps)</option>
+        </select>
+      </div>
+      <div class="uspi-item" data-for="net">
+        <div class="uspi-item-label">Interface</div>
+        <input class="uspi-item-value" type="text" name="iface" placeholder="auto">
+      </div>
+      <div class="hint" data-for="net">Leave blank to follow the default network adapter (Wi-Fi / Ethernet).</div>
+
+      <div class="uspi-heading" data-for="cpu mem disk net gpu temp overview ping uptime battery diskio top cores">When pressed</div>
+      <div type="select" class="uspi-item" data-for="cpu mem disk net gpu temp overview ping uptime battery diskio top cores">
+        <div class="uspi-item-label">Action</div>
+        <select class="uspi-item-value" name="press">
+          <option value="toggle" selected>Switch ring/graph (refresh)</option>
+          <option value="dashboard">Open dashboard</option>
+        </select>
+      </div>
+
+      <div class="hint" data-for="dashboard">Press this key to open the dashboard in your browser (default address http://127.0.0.1:39170). Charts, per-core bars, top processes and all display settings live there. The key shows live CPU usage.</div>
+
+      <div class="uspi-heading" data-for="top">Top Process</div>
+      <div type="select" class="uspi-item" data-for="top">
+        <div class="uspi-item-label">Sort by</div>
+        <select class="uspi-item-value" name="sort">
+          <option value="cpu" selected>CPU usage</option>
+          <option value="mem">RAM usage</option>
+        </select>
+      </div>
+      <div class="hint" data-for="top">Press the key to switch between CPU and RAM. This setting is the starting view. Processes with the same name (e.g. all Chrome processes) are added together. Refreshes every 5 s by default because reading all processes is heavier.</div>
+
+      <div class="hint" data-for="diskio">R = read speed, W = write speed (whole PC, all drives).</div>
+      <div class="hint" data-for="cores">One bar per CPU thread. With more than 16 threads, neighbouring threads are averaged.</div>
+
+      <div class="uspi-heading" data-for="ping">Ping</div>
+      <div class="uspi-item" data-for="ping">
+        <div class="uspi-item-label">Host</div>
+        <input class="uspi-item-value" type="text" name="host" placeholder="1.1.1.1">
+      </div>
+      <div class="hint" data-for="ping">IP or domain, e.g. 8.8.8.8 or google.com. Warning / critical are in milliseconds.</div>
+
+      <div class="hint" data-for="battery">For Battery, warning / critical are the levels it falls <b>below</b> (default 30% and 15%). Charging shows cyan when Color = Auto.</div>
+
+      <div class="uspi-heading" data-for="temp">Temperature</div>
+      <div type="select" class="uspi-item" data-for="temp">
+        <div class="uspi-item-label">Sensor</div>
+        <select class="uspi-item-value" name="source">
+          <option value="cpu" selected>CPU</option>
+          <option value="gpu">GPU</option>
+        </select>
+      </div>
+      <div class="uspi-item" data-for="temp">
+        <div class="uspi-item-label">LibreHW URL</div>
+        <input class="uspi-item-value" type="text" name="lhm" placeholder="http://127.0.0.1:8085/data.json">
+      </div>
+      <div class="hint" data-for="temp">
+        If the PC does not expose CPU temperature (common on Windows), run LibreHardwareMonitor with <b>Options → Remote Web Server → Run</b>. The plugin finds it automatically on port 8085; fill the URL only if you changed it.
+      </div>
+
+      <div class="hint" data-for="cpu mem disk gpu temp ping battery">Tip: press the key to switch between ring and graph temporarily.</div>
+
+    </form>
+  </div>
+
+  <script src="../libs/js/constants.js"></script>
+  <script src="../libs/js/eventEmitter.js"></script>
+  <script src="../libs/js/timers.js"></script>
+  <script src="../libs/js/utils.js"></script>
+  <script src="../libs/js/ulanziApi.js"></script>
+  <script src="./inspector.js"></script>
+</body>
+
+</html>
